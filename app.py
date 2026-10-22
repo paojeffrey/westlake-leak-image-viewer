@@ -12,6 +12,9 @@ from PIL import Image
 from databricks.sdk import WorkspaceClient
 
 # ── Configuration ────────────────────────────────────────
+# NOTE: These values point at the Databricks FE demo workspace. Westlake's
+# workspace uses different catalog/schema/table/volume names and a different
+# warehouse — update all of them (and app.yaml) before deploying there.
 CATALOG = "stable_classic_wg38i9_catalog"
 SCHEMA = "westlake_gas_leakage_2"
 TABLE = f"{CATALOG}.{SCHEMA}.silver_liquid_leak_results"

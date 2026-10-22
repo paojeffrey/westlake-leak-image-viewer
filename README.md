@@ -4,6 +4,21 @@ A [Databricks App](https://docs.databricks.com/en/dev-tools/databricks-apps/inde
 
 Built with [Dash](https://dash.plotly.com/) + [Dash Bootstrap Components](https://dash-bootstrap-components.opensource.faculty.ai/) and the [Databricks SDK for Python](https://docs.databricks.com/en/dev-tools/sdk-python.html).
 
+> [!IMPORTANT]
+> **Update these names before deploying in Westlake's environment.**
+> The catalog, schema, table, volume path, and warehouse ID in this repo come from the Databricks FE demo workspace (`stable_classic_wg38i9_catalog`). Westlake's workspace will use **different names**, and the app will fail at startup until you change them.
+>
+> | What | Where | Current (demo) value | Change to |
+> |------|-------|----------------------|-----------|
+> | Catalog | `app.py` → `CATALOG` | `stable_classic_wg38i9_catalog` | Westlake catalog |
+> | Schema | `app.py` → `SCHEMA` | `westlake_gas_leakage_2` | Westlake schema |
+> | Results table | `app.py` → `TABLE` | `silver_liquid_leak_results` | Westlake results table |
+> | Image folder | `app.py` → `VOLUME_DIR` | `/Volumes/<catalog>/<schema>/documents/OneDrive_1_10-13-2026` | Westlake volume + folder |
+> | SQL warehouse | `app.yaml` → `DATABRICKS_WAREHOUSE_ID` (and the fallback in `app.py` → `WAREHOUSE_ID`) | `4c06524b26564b9c` | Westlake warehouse ID |
+> | App resources | Databricks Apps UI → *Resources* | demo warehouse, table, volume | Westlake warehouse, table, volume |
+>
+> Westlake's table must also have the columns listed in [Expected table columns](#expected-table-columns), or the SQL in `_query_metadata()` in `app.py` must be changed to match.
+
 ## Features
 
 - **Summary stats**: total events, leaks detected, images available, and number of POIs
@@ -29,7 +44,9 @@ Built with [Dash](https://dash.plotly.com/) + [Dash Bootstrap Components](https:
                                                                     └──────────────────────────────┘
 ```
 
-| Component | Value |
+Values below are from the **demo workspace**; replace them for Westlake (see the note at the top).
+
+| Component | Demo value |
 |-----------|-------|
 | Catalog / schema | `stable_classic_wg38i9_catalog.westlake_gas_leakage_2` |
 | Results table | `silver_liquid_leak_results` |
@@ -68,17 +85,27 @@ Only rows whose `filename` exists in the volume are shown in the grid.
 
 ### 1. App resources
 
-Give the app's service principal access to:
+Give the app's service principal access to the following, using **Westlake's** warehouse, table and volume (the demo names are shown as examples):
 
-| Resource name | Type | Permission |
-|---------------|------|------------|
-| `sql-warehouse` | SQL warehouse | `CAN_USE` |
-| `silver-table` | UC table `...westlake_gas_leakage_2.silver_liquid_leak_results` | `SELECT` |
-| `documents-volume` | UC volume `...westlake_gas_leakage_2.documents` | `READ_VOLUME` |
+| Resource name | Type | Permission | Demo example |
+|---------------|------|------------|--------------|
+| `sql-warehouse` | SQL warehouse | `CAN_USE` | `4c06524b26564b9c` |
+| `silver-table` | UC table | `SELECT` | `stable_classic_wg38i9_catalog.westlake_gas_leakage_2.silver_liquid_leak_results` |
+| `documents-volume` | UC volume | `READ_VOLUME` | `stable_classic_wg38i9_catalog.westlake_gas_leakage_2.documents` |
 
 ### 2. Configure
 
-Set the warehouse ID in `app.yaml`:
+Edit the constants at the top of `app.py` to match Westlake's environment:
+
+```python
+CATALOG = "<westlake_catalog>"
+SCHEMA = "<westlake_schema>"
+TABLE = f"{CATALOG}.{SCHEMA}.<westlake_results_table>"
+VOLUME_DIR = f"/Volumes/{CATALOG}/{SCHEMA}/<volume>/<image_folder>"
+WAREHOUSE_ID = os.environ.get("DATABRICKS_WAREHOUSE_ID", "<westlake_warehouse_id>")
+```
+
+Then set the warehouse ID in `app.yaml`:
 
 ```yaml
 command:
@@ -88,8 +115,6 @@ env:
   - name: DATABRICKS_WAREHOUSE_ID
     value: "<your-warehouse-id>"
 ```
-
-To point the app at a different catalog, schema, table, or volume folder, edit the constants at the top of `app.py` (`CATALOG`, `SCHEMA`, `TABLE`, `VOLUME_DIR`).
 
 ### 3. Deploy
 
